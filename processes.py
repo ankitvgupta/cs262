@@ -1,7 +1,7 @@
 import random
 import multiprocessing
-from multiprocessing import Queue
 import time
+import Queue
 
 def clock(ticks_per_second):
     clock_wait = 1.0/ticks_per_second
@@ -18,18 +18,21 @@ def clock(ticks_per_second):
 #         print time.time()
 #         time.sleep(0.5)
 
-# class QueueBuf(object):
-#     def __init__(self, ipc_queue):
-#         pass
+class QueueBuf(object):
+    def __init__(self, ipc_queue):
+        self.ipc_queue = ipc_queue
+        self.queue = Queue.Queue()
 
-#     def get_nowait():
-#         pass
+    def get_nowait():
+        while not self.ipc_queue.empty():
+            self.queue.put(self.ipc_queue.get_nowait())
+        return self.queue.get_nowait()
 
-#     def qsize():
-#         pass
+    def qsize():
+        return self.queue.qsize()
 
-def QueueBuf(ipc_queue):
-    return ipc_queue
+#def QueueBuf(ipc_queue):
+#    return ipc_queue
 
 
 def worker(our_queue, other_queue, third_queue):
