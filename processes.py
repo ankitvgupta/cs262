@@ -1,46 +1,62 @@
 import random
 import multiprocessing
+from multiprocessing import Queue
 import time
-import queue
 
-def worker(q0, q1, q2):
-    name = multiprocessing.current_process().name
-    personal_queue, alt_queue1, alt_queue2 = 0,0,0
-    clock_speed = 1.0/random.randint(1,6)
-    if name == "0":
-    	#q0.put(name)
-        queue_wanted = q0
-        alt_queue1 = q1
-        alt_queue2 = q2
-    elif name == "1":
-    	#q1.put(name)
-        queue_wanted = q0
-        alt_queue1 = q1
-        alt_queue2 = q2
-    else:
-    	#q2.put(name)
-        queue_wanted = q0
-        alt_queue1 = q1
-        alt_queue2 = q2
-
-
+def clock(ticks_per_second):
+    clock_wait = 1.0/ticks_per_second
+    last_tick = time.time()
     while True:
-        timeleft = clock_speed
-        queue_wanted.get(block=True, timeout=timeleft)
+        next_tick = last_tick + clock_wait
+        yield
+        time.sleep(max(next_tick - time.time(), 0))
+        last_tick = next_tick
+
+
+# if __name__ == '__main__':
+#     for tick in clock(1):
+#         print time.time()
+#         time.sleep(0.5)
+
+# class QueueBuf(object):
+#     def __init__(self, ipc_queue):
+#         pass
+
+#     def get_nowait():
+#         pass
+
+#     def qsize():
+#         pass
+
+def QueueBuf(ipc_queue):
+    return ipc_queue
+
+
+def worker(our_queue, other_queue, third_queue):
+    our_queue = QueueBuf(our_queue)
+    lc = 1
+    for tick in clock(ticks_per_second):
+        try:
+            recieved_value = our_queue.get_nowait()
+        except Queue.Empty:
+            recieved_value = None
+
+        if recieved_value != None:
+            print recieved_value,
 
 
 
 
+def without(elem, arr):
+    return [x for x in arr if elem != x]
 
 
 
 if __name__ == '__main__':
 	# Create three queues
-    q0 = multiprocessing.Queue()
-    q1 = multiprocessing.Queue()
-    q2 = multiprocessing.Queue()
+    qs = [multiprocessing.Queue() for i in range(3)]
     # Create three processes, and pass in the shared queues
-    jobs = [multiprocessing.Process(target=worker, name=str(i), args=(q0, q1, q2,)) for i in range(3)]
+    jobs = [multiprocessing.Process(target=worker, args=tuple(q, *without(q, qs)) for q in qs]
 
     # Start the jobs
     for j in jobs:
