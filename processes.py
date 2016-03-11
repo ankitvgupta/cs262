@@ -27,18 +27,20 @@ class QueueBuf(object):
     def qsize(self):
         return self.queue.qsize()
 
-def worker(name, recv_queue, internal, max_ticks, global_start_time, other_queue, third_queue):
+def worker(name, recv_queue, internal, max_ticks, global_start_time, time_limit, other_queue, third_queue):
     our_queue = QueueBuf(recv_queue)
     lc = 1
     ticks_per_second = random.randint(1, max_ticks)
     # Create a log file
     f = open(str(global_start_time)+"_"+name+".txt", 'w')
     #print max_ticks, internal
-
+    process_start_time = time.time()
     def log(*args):
         f.write(', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)]) + "\n")
 
     for tick in clock(ticks_per_second):
+        if time.time()  - process_start_time > time_limit:
+            sys.exit()
         try:
             (recieved_value, machine) = our_queue.get_nowait()
         except Queue.Empty:
@@ -83,17 +85,23 @@ if __name__ == '__main__':
                         type=int)
     parser.add_argument('-max_speed', default=6, help="Maximum ticks per second",
                         type=int)
+    parser.add_argument('-time_limit', default=60, help="Maximum time for run each process.",
+                        type=int)
 
     args = parser.parse_args(sys.argv[1:])
     internal = args.internal
     max_speed = args.max_speed
+    time_limit = args.time_limit
 	# Create three queues
     qs = [multiprocessing.Queue() for i in range(3)]
     # Create three processes, and pass in the shared queues
     # This assigns a unique start time to this job.
-    global_start_time = int(time.time())
+    global_start_time = time.time()
+    f = open(str(global_start_time)+".txt", 'w')
+    f.write("Internal," + str(internal)+", MaxSpeed," + str(max_speed) + ",TimeLimit," + str(time_limit) + "\n")
+    f.close()
     jobs = [multiprocessing.Process(target=worker,
-        args=tuple([str(i), q,internal,max_speed, global_start_time] + without(q, qs)))
+        args=tuple([str(i), q,internal,max_speed, global_start_time, time_limit] + without(q, qs)))
         for i, q in enumerate(qs)]
 
     # Start the jobs
