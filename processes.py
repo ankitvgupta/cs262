@@ -2,6 +2,8 @@ import random
 import multiprocessing
 import time
 import Queue
+import argparse
+import sys
 
 def clock(ticks_per_second):
     clock_wait = 1.0/ticks_per_second
@@ -25,10 +27,11 @@ class QueueBuf(object):
     def qsize(self):
         return self.queue.qsize()
 
-def worker(name, recv_queue, other_queue, third_queue):
+def worker(name, recv_queue, internal, max_ticks, other_queue, third_queue):
     our_queue = QueueBuf(recv_queue)
     lc = 1
-    ticks_per_second = random.randint(1, 6)
+    ticks_per_second = random.randint(1, max_ticks)
+    #print max_ticks, internal
 
     def log(*args):
         print ', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)])
@@ -44,7 +47,7 @@ def worker(name, recv_queue, other_queue, third_queue):
             log("recieved", machine, recieved_value)
 
         else:
-            die = random.randint(1, 10)
+            die = random.randint(1, internal)
             if die == 1:
                 lc += 1
                 other_queue.put((lc, name))
@@ -70,11 +73,23 @@ def without(elem, arr):
     return [x for x in arr if elem != x]
 
 if __name__ == '__main__':
+    global args
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-internal', default=10, help="Max value used for internal event (1,2,3 used for sending, 4-internal used for internal events)",
+                        type=int)
+    parser.add_argument('-max_speed', default=6, help="Maximum ticks per second",
+                        type=int)
+
+    args = parser.parse_args(sys.argv[1:])
+    internal = args.internal
+    max_speed = args.max_speed
 	# Create three queues
     qs = [multiprocessing.Queue() for i in range(3)]
     # Create three processes, and pass in the shared queues
     jobs = [multiprocessing.Process(target=worker,
-        args=tuple([str(i), q] + without(q, qs)))
+        args=tuple([str(i), q,internal,max_speed] + without(q, qs)))
         for i, q in enumerate(qs)]
 
     # Start the jobs
