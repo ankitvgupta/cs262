@@ -27,14 +27,16 @@ class QueueBuf(object):
     def qsize(self):
         return self.queue.qsize()
 
-def worker(name, recv_queue, internal, max_ticks, other_queue, third_queue):
+def worker(name, recv_queue, internal, max_ticks, global_start_time, other_queue, third_queue):
     our_queue = QueueBuf(recv_queue)
     lc = 1
     ticks_per_second = random.randint(1, max_ticks)
+    # Create a log file
+    f = open(str(global_start_time)+"_"+name+".txt", 'w')
     #print max_ticks, internal
 
     def log(*args):
-        print ', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)])
+        f.write(', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)]) + "\n")
 
     for tick in clock(ticks_per_second):
         try:
@@ -88,8 +90,10 @@ if __name__ == '__main__':
 	# Create three queues
     qs = [multiprocessing.Queue() for i in range(3)]
     # Create three processes, and pass in the shared queues
+    # This assigns a unique start time to this job.
+    global_start_time = int(time.time())
     jobs = [multiprocessing.Process(target=worker,
-        args=tuple([str(i), q,internal,max_speed] + without(q, qs)))
+        args=tuple([str(i), q,internal,max_speed, global_start_time] + without(q, qs)))
         for i, q in enumerate(qs)]
 
     # Start the jobs
