@@ -28,7 +28,11 @@ class QueueBuf(object):
 def worker(name, recv_queue, other_queue, third_queue):
     our_queue = QueueBuf(recv_queue)
     lc = 1
-    ticks_per_second = 1.0/random.randint(1, 6)
+    ticks_per_second = random.randint(1, 6)
+
+    def log(*args):
+        print ', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)])
+
     for tick in clock(ticks_per_second):
         try:
             (recieved_value, machine) = our_queue.get_nowait()
@@ -37,30 +41,30 @@ def worker(name, recv_queue, other_queue, third_queue):
 
         if recieved_value != None:
             lc = max(lc, recieved_value) + 1
-            print "machine " + name + " recieved", machine, recieved_value, time.time(), lc
+            log("recieved", machine, recieved_value)
 
         else:
             die = random.randint(1, 10)
             if die == 1:
                 lc += 1
                 other_queue.put((lc, name))
-                print "machine " + name + " sent (1)", time.time(), lc
+                log("sent", 1)
 
             elif die == 2:
                 lc += 1
                 third_queue.put((lc, name))
-                print "machine " + name + " sent (2)", time.time(), lc
+                log("sent", 2)
 
             elif die == 3:
                 lc += 1
                 other_queue.put((lc, name))
                 third_queue.put((lc, name))
-                print "machine " + name + " sent (3)", time.time(), lc
+                log("sent", 3)
 
             else:
                 # internal event
                 lc += 1
-                print "machine " + name + " internal event", time.time(), lc
+                log("internal")
 
 def without(elem, arr):
     return [x for x in arr if elem != x]
