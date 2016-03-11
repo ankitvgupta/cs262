@@ -32,8 +32,8 @@ def QueueBuf(ipc_queue):
     return ipc_queue
 
 
-def worker(our_queue, other_queue, third_queue):
-    our_queue = QueueBuf(our_queue)
+def worker(name, recv_queue, other_queue, third_queue):
+    our_queue = QueueBuf(recv_queue)
     lc = 1
     for tick in clock(ticks_per_second):
         try:
@@ -42,21 +42,42 @@ def worker(our_queue, other_queue, third_queue):
             recieved_value = None
 
         if recieved_value != None:
-            print recieved_value,
+            lc = max(lc, recieved_value) + 1
+            print "machine " + name + " recieved", time.time(), lc
 
+        else:
+            die = random.randint(1, 10)
+            if die == 1:
+                other_queue.put(lc)
+                lc += 1
+                print "machine " + name + " sent (1)", time.time(), lc
 
+            else if die == 2:
+                third_queue.put(lc)
+                lc += 1
+                print "machine " + name + " sent (2)", time.time(), lc
 
+            else if die == 3:
+                other_queue.put(lc)
+                third_queue.put(lc)
+                lc += 1
+                print "machine " + name + " sent (3)", time.time(), lc
+
+            else:
+                # internal event
+                lc += 1
+                print "machine " + name + " internal event", time.time(), lc
 
 def without(elem, arr):
     return [x for x in arr if elem != x]
-
-
 
 if __name__ == '__main__':
 	# Create three queues
     qs = [multiprocessing.Queue() for i in range(3)]
     # Create three processes, and pass in the shared queues
-    jobs = [multiprocessing.Process(target=worker, args=tuple(q, *without(q, qs)) for q in qs]
+    jobs = [multiprocessing.Process(target=worker,
+        args=tuple(str(i), q, *without(q, qs))
+        for i, q in enumerate(qs)]
 
     # Start the jobs
     for j in jobs:
@@ -65,14 +86,3 @@ if __name__ == '__main__':
     # Wait for them to finish
     for j in jobs:
         j.join()
-
-    # Print what is in the queues
-    print "Q0"
-    while not q0.empty():
-    	print q0.get()
-    print "Q1"
-    while not q1.empty():
-    	print q1.get()
-    print "Q2"
-    while not q2.empty():
-    	print q2.get()
