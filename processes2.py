@@ -1,3 +1,11 @@
+# processes.py: Implements logical clocks on three processes, which communicate via interprocess communcation.
+#   Handles simulation of multithreading by repeatedly blocking (with a timeout) and waiting for a process to receive a message from 
+#   another one. If a message comes before a timeout, this is repeated for the remaining time, until a timeout occurs.
+#   This ensures that processes do work at every 1/ticks_per_second seconds. 
+#   You can confirm that this works by looking at the clock values in the outputted log files.
+# Authors: Ankit Gupta, Jared Pochtar
+# CS 262, Harvard University
+
 import random
 import multiprocessing
 import time
