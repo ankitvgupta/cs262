@@ -13,15 +13,23 @@ import Queue
 import argparse
 import sys
 
+# This is a generator that defines the process clock.
+# It takes the ticks per second for the proocess as an input, along with a reference to the local queue buffer.
+# It works by repeatedly blocking (with a timeout) and waiting for a process to receive a message from another one. If a message comes before a timeout, this is repeated for the remaining time, until a timeout occurs.
+# This ensures that processes do work at every 1/ticks_per_second seconds. 
 def clock(ticks_per_second, our_queue):
+    # Determine the time to wait between ticks.
     clock_wait = 1.0/ticks_per_second
     last_tick = time.time()
     while True:
         yield
+        # Determine when the next should be be.
         next_tick = last_tick + clock_wait
+        # Determine how long the timeout for the block should be.
         time_needed = next_tick - time.time()
         while True:
             try:
+                # If we get something, move it to our queue from the interprocess queue, and block for the remaining time.
                 our_queue.pull_from_main(time_needed)
                 time_needed = next_tick - time.time()
             except:
@@ -29,7 +37,8 @@ def clock(ticks_per_second, our_queue):
                 break
         last_tick = next_tick
 
-
+# This is our implementation of an in-process buffer. 
+# It works by storing a reference to the inter-process communication channel, and the local buffer.
 class QueueBuf(object):
     def __init__(self, ipc_queue):
         self.ipc_queue = ipc_queue
@@ -42,30 +51,45 @@ class QueueBuf(object):
     def qsize(self):
         return self.queue.qsize()
 
+# This defines the function that each worker process does
+#   name: the name of the process
+#   recv_queue: The interprocess communication channel that sends information to this process.
+#   internal: In order to determine if there is an internal event, this process samples between 1 and internal
+#   max_ticks: In order to determine the clock speed, the process samples between 1 and max_ticks
+#   global_start_time: This is just the time that the master process began. It lets us uniquely identify this job
+#   time_limit: how long the worker should run
+#   other_queue: The interprocess communcation channel for the first of the other processes
+#   third_queue: The interprocess communcation channel for the second of the other processes
 def worker(name, recv_queue, internal, max_ticks, global_start_time, time_limit, other_queue, third_queue):
     our_queue = QueueBuf(recv_queue)
+    # Initialize the logical clock value
     lc = 1
+    # Sample to determine the clock speed
     ticks_per_second = random.randint(1, max_ticks)
     # Create a log file
     f = open(str(global_start_time)+"_"+name+".txt", 'w')
-    #print max_ticks, internal
+    # Record when the pricess began
     process_start_time = time.time()
+    # A simple function for unified logging. This lets us log essential parameters (name, time, logical clock value), along with any other passed args.
     def log(*args):
         f.write(', '.join([str(e) for e in [name, time.time(), lc, our_queue.qsize()] + list(args)]) + "\n")
-
+    # Start ticking
     for tick in clock(ticks_per_second, our_queue):
+        # timeout
         if time.time()  - process_start_time > time_limit:
             sys.exit()
+        # If there is anything in the queue, get it.
         try:
             (recieved_value, machine) = our_queue.get_nowait()
         except Queue.Empty:
             recieved_value = None
-
+        
+        # If we got something, log it.
         if recieved_value != None:
             #print("Going to log")
             lc = max(lc, recieved_value) + 1
-            log("recieved", machine, recieved_value)
-
+            log("recieved", machine, recieved_value)        
+        # Else, determine if we have an internal event or a sending event, and log accordingly.
         else:
             die = random.randint(1, internal)
             if die == 1:
@@ -88,11 +112,12 @@ def worker(name, recv_queue, internal, max_ticks, global_start_time, time_limit,
                 # internal event
                 lc += 1
                 log("internal")
-
+# A little helper function for setting up the jobs.
 def without(elem, arr):
     return [x for x in arr if elem != x]
 
 if __name__ == '__main__':
+    # Parse command line arguments.
     global args
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -108,22 +133,27 @@ if __name__ == '__main__':
     internal = args.internal
     max_speed = args.max_speed
     time_limit = args.time_limit
-	# Create three queues
+
+    # Create three queues. These queues are implemented under the hood as pipes between the processes.
     qs = [multiprocessing.Queue() for i in range(3)]
-    # Create three processes, and pass in the shared queues
-    # This assigns a unique start time to this job.
+
+    # This assigns a unique start time to this job. 
     global_start_time = time.time()
+
+    # Log the job arguments to a file.
     f = open(str(global_start_time)+".txt", 'w')
     f.write("Internal," + str(internal)+", MaxSpeed," + str(max_speed) + ",TimeLimit," + str(time_limit) + "\n")
     f.close()
+
+    # Create three processes, and pass in the queues for the other processes.
     jobs = [multiprocessing.Process(target=worker,
         args=tuple([str(i), q,internal,max_speed, global_start_time, time_limit] + without(q, qs)))
         for i, q in enumerate(qs)]
 
-    # Start the jobs
+    # Start the processes.
     for j in jobs:
         j.start()
 
-    # Wait for them to finish
+    # Wait for them to finish (this will happen when they each time out.)
     for j in jobs:
         j.join()

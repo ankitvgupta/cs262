@@ -13,7 +13,7 @@ import argparse
 import sys
 
 # This is a generator that defines the process clock.
-# It takes the tickes per second for the proocess as an input, and performs all of the necessary functions
+# It takes the ticks per second for the proocess as an input, and performs all of the necessary functions
 # needed to make sure that the process does work every 1/ticks_per_second seconds.
 def clock(ticks_per_second):
     clock_wait = 1.0/ticks_per_second
@@ -125,8 +125,8 @@ if __name__ == '__main__':
     max_speed = args.max_speed
     time_limit = args.time_limit
 
-	# Create three queues. These queues are implemented under the hood as a series of pipes between the processes.
-    qs = [multiprocessing.Queue() for i in range(3)]]
+	# Create three queues. These queues are implemented under the hood as pipes between the processes.
+    qs = [multiprocessing.Queue() for i in range(3)]
 
     # This assigns a unique start time to this job. 
     global_start_time = time.time()
@@ -141,7 +141,7 @@ if __name__ == '__main__':
         args=tuple([str(i), q,internal,max_speed, global_start_time, time_limit] + without(q, qs)))
         for i, q in enumerate(qs)]
 
-    # Start the jobs
+    # Start the processes.
     for j in jobs:
         j.start()
 
