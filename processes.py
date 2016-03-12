@@ -42,7 +42,7 @@ class QueueBuf(object):
 # This defines the function that each worker process does
 #   name: the name of the process
 #   recv_queue: The interprocess communication channel that sends information to this process.
-#   internal: In order to determine if there is an internal event, this process samples between 1 and internal
+#   internal: In order to determine if there is an internal event, this process samples between 1 and internal. {1,2,3} are send events. [4,internal] are internal events.
 #   max_ticks: In order to determine the clock speed, the process samples between 1 and max_ticks
 #   global_start_time: This is just the time that the master process began. It lets us uniquely identify this job
 #   time_limit: how long the worker should run
