@@ -63,8 +63,7 @@
 % should be used if it is desired that the figures are to be displayed in
 % draft mode.
 %
-\documentclass[journal]{IEEEtran}
-\usepackage{blindtext}
+\documentclass[]{article}
 \usepackage{graphicx}
 
 % Some very useful LaTeX packages include:
@@ -416,7 +415,7 @@
     \begin{enumerate}
       \item Sleep for process’s sleep time
       \item Wake, pull everything from interprocess queue into local queue
-      \item Check if anything in local queue, if so, do work as specificed in the spec
+      \item Check if anything in local queue, if so, do work as specified in the spec
     \end{enumerate}
   \end{enumerate}
   \item We make sure to always sleep for just enough time. In other words, if the sleep time is .5 seconds (meaning the clock speed is 2/second), and the work takes .2 seconds, then the sleep will only take .3 seconds to make up for this.
@@ -441,13 +440,14 @@ Originally, we just printing log results directly to stdout from each of the pro
 
 In the first set of experiments, we used the default set of parameters.  This means that the number of ticks per second were between 1 and 6, and the values 4-10 were used for internal events.
 
-All of the graphs for these three had the same overall look, and they appear as in the graph you can see at \ref{fig:ex1}
+All of the graphs for these three had the same overall look, and they appear as in the graph you can see at figure \ref{fig:ex1}.
 
 \begin{figure}[!ht]
   \label{fig:ex1}
   \centering
-  \includegraphics[width=0.5\textwidth]{{{pictures/1457670968.98_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457670968.98_queue}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457670968.98_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457670968.98_queue}}}
+    \caption{Experiments 1}
 \end{figure}
 
 
@@ -459,23 +459,25 @@ In the next set of experiments, we altered the probability of there being an int
 
 For the first of these, we are going to essentially vastly increase the amount of interprocess communication. We expect that this will lead to at least one of the processes (the one with the slowest clock speed) getting completely inundated in its queue, and thus falling behind in the logical clock values. This is exactly what we observed, as seen by \ref{fig:ex2}. By looking at the queue picture, we can see that the size of the queue for one of the processes continues to grow, and by looking at the logical clock values, we can see that the same process is getting behind.
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex2}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671089.64_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671089.64_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671089.64_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671089.64_queue}}}
+    \caption{Experiments 2}
+\end{figure*}
 
 
-For the second one, we are making internal events more likely. That means that the processes will increase their logical clock values without synchronizing with one another as much. However, since there is less communication, when there is the occasional communication, they will sync up. So, we would expect to see larger jumps, but the process's logical clocks largely keeping up with one another. This is exactly what happens, and we can see this in \ref{fig:ex3}. The case with internal=35 has the same general behavior, except the jumps are larger, as is expected.
+For the second one, we are making internal events more likely. That means that the processes will increase their logical clock values without synchronizing with one another as much. However, since there is less communication, when there is the occasional communication, they will sync up. So, we would expect to see larger jumps, but the process's logical clocks largely keeping up with one another. This is exactly what happens, and we can see this in \ref{fig:ex3}. The case with P(internal)=32/35 has the same general behavior, except the jumps are larger, as is expected.
 
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex3}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671149.97_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671149.97_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671149.97_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671149.97_queue}}}
+    \caption{Experiments 3}
+\end{figure*}
 
 \subsection{Experiments 3}
 In this set of experiments, we maintain internal, but change the max clock speed for a process. This allows us to see what happens with differences between process speed is much higher (say, an order of magnitude), or much lower, where the number of ticks per second is just 1, 2, or 3. So, in this set of experiments, we set the probability of an internal event to the default .7, but we varied the maximum clock speed to be 3, 10, and 20, rather than the default of 6.
@@ -483,31 +485,34 @@ In this set of experiments, we maintain internal, but change the max clock speed
 For the max speed of 3, we expected that the three processes would essentially all have the same speed, and would thus be able to keep up with one another in terms of logical clock speed. Though this is generally what happened, there was actually some lag in the logical clock values for one the processes. We believe this is because that process got a clock speed of 1 per second, which was half of the other two. So, it seems that the ratio of process speeds is the critical element in determining whether a process can consistently keep up, which makes sense in retrospect. You can see this in \ref{fig:ex4}.
 
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex4}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671270.55_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671270.55_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671270.55_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671270.55_queue}}}
+    \caption{Experiments 4}
+\end{figure*}
 
 
 For the max speed of 10, our sampled values tended to be close to one another, so all of the processes ran at the very similar speed. Thus, the processes logical clocks were able to keep up with one another and the queues were small. You can see this in \ref{fig:ex5}.
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex5}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671330.86_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671330.86_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671330.86_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671330.86_queue}}}
+    \caption{Experiments 5}
+\end{figure*}
 
 However, with the max speed of 20, our sampled clock speeds were much more varied. In particular, one of the processes had a clock speed of 10 ticks per second, and the other was 1 tick per second, giving an order of magnitude difference. In this case, we can see that slow process is simply not able to keep up, since it cannot process everything that comes into its queue. You can see the results for this in \ref{fig:ex6}.
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex6}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671391.12_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671391.12_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671391.12_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671391.12_queue}}}
+    \caption{Experiments 6}
+\end{figure*}
 
 \subsection{Experiments 4}
 
@@ -528,21 +533,23 @@ max speed = 20 &P(internal) = 12/15 \\
 \end{tabular}
 \end{center}
 
-Rather than talking about each of these separately, we will discuss the high-level takeaways from these configurations. For some of these, we observed and amplified effect from before, and some of the processes were simply inundated and could not keep up with the others. For example, consider the max speed = 20, P(internal) = 5 case (\ref{fig:ex7}). In this one, the slowest process had to both deal with the fact that there was tons of communication because of the low chance of an internal event in any process, and there was a very high max possible clock speed. So, you can see that the logical clock value for one process lags way behind the others, and the queue is very long (300+). On the other hand, we can see that having a max speed = 20 and internal = 15 can mitigate the effects of a very large max speed. In this case, we still had one process that was an order of magnitude faster than another. However, the high probability of internal events means that there was less communication, smaller queues, and it was easier for the processes to stay caught up with one another. You can see this in \ref{fig:ex8}.
+Rather than talking about each of these separately, we will discuss the high-level takeaways from these configurations. For some of these, we observed and amplified effect from before, and some of the processes were simply inundated and could not keep up with the others. For example, consider the max speed = 20, P(internal) = 2/5 case (\ref{fig:ex7}). In this one, the slowest process had to both deal with the fact that there was tons of communication because of the low chance of an internal event in any process, and there was a very high max possible clock speed. So, you can see that the logical clock value for one process lags way behind the others, and the queue is very long (300+). On the other hand, we can see that having a max speed = 20 and P(internal) = 12/15 can mitigate the effects of a very large max speed. In this case, we still had one process that was an order of magnitude faster than another. However, the high probability of internal events means that there was less communication, smaller queues, and it was easier for the processes to stay caught up with one another. You can see this in \ref{fig:ex8}.
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex7}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671692.8_lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671692.8_queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671692.8_lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671692.8_queue}}}
+    \caption{Experiments 7}
+\end{figure*}
 
-\begin{figure}[!ht]
+\begin{figure*}[!ht]
   \label{fig:ex8}
   \centering
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671753.09.lc}}}
-    \includegraphics[width=0.5\textwidth]{{{pictures/1457671753.09.queue}}}
-\end{figure}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671753.09.lc}}}
+    \includegraphics[width=0.4\textwidth]{{{pictures/1457671753.09.queue}}}
+    \caption{Experiments 8}
+\end{figure*}
 
 \section{Conclusion}
 Overall, we generally found that under many conditions, one of the processes will significantly lag behind the others in terms of logical clock value. In particular, we can create this occurrence by having very high max speed values, which would likely lead to one process being much faster than the other, and thus the other being left behind.  We can also do this by decreasing the amount of internal events, and thus increasing the amount of interprocess communication, which would also lead to large queues of messages in the slowest process.
